@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HOTSPOTER | Wi-Fi Manager</title>
+<style>
+:root {
+  --bg:#071426; --panel:#10213a; --line:#263b56;
+  --text:#f1f5f9; --muted:#9aacc3;
+  --cyan:#35ddc0; --blue:#3182f6; --red:#fb7185;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:Arial,sans-serif; font-size:14px; }
+header {
+  padding:18px 16px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--line); background:#09182b; position:sticky; top:0; z-index:5;
+}
+.brand {display:flex;align-items:center;gap:10px}
+.logo { width:42px;height:42px;border-radius:13px;background:#123b4a; display:grid;place-items:center;color:var(--cyan);font-size:23px; }
+h1 {font-size:20px;margin:0;letter-spacing:1px}
+.sub {color:var(--muted);font-size:11px;margin-top:4px}
+button,select,input {font:inherit}
+button {cursor:pointer}
+.wrap {max-width:1050px;margin:auto;padding:18px 14px 40px}
+.tabs {display:flex;gap:8px;margin-bottom:20px}
+.tab { flex:1;border:1px solid var(--line);border-radius:10px; padding:12px 5px;background:var(--panel);color:var(--muted); }
+.tab.active {background:#123b4a;color:var(--cyan);border-color:#238b82}
+.page {display:none}
+.page.active {display:block}
+.card { background:var(--panel);border:1px solid var(--line); border-radius:15px;padding:17px;margin-bottom:14px; }
+h2 {font-size:19px;margin:0 0 8px}
+h3 {font-size:14px;margin:0 0 13px}
+p {color:var(--muted);line-height:1.6}
+.label {display:block;margin:15px 0 7px;color:#cfdae8}
+input,select { width:100%;padding:13px;border:1px solid var(--line); border-radius:9px;background:#09182b;color:white;outline:none; }
+button.primary { width:100%;padding:13px;border:0;border-radius:9px; background:var(--cyan);color:#06231f;font-weight:bold;margin-top:13px; }
+button.secondary { padding:9px 12px;border:1px solid var(--line);border-radius:8px; background:#172b45;color:var(--text); }
+button.danger { color:var(--red); }
+button:disabled {opacity:.45;cursor:not-allowed}
+.packages { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+.package { text-align:left;background:#0a1a2e;color:white; border:1px solid var(--line);border-radius:12px;padding:14px; }
+.package.selected {border:1px solid var(--cyan);background:#103343}
+.package strong {display:block;font-size:18px;margin:8px 0}
+.package small {color:var(--muted)}
+.notice { padding:12px;border-radius:9px;background:#0a1a2e; color:var(--muted);line-height:1.6;margin-top:12px; }
+.notice.err {color:var(--red)}
+.status {font-size:12px;color:var(--cyan)}
+.stats {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat {padding:14px;background:#0a1a2e;border-radius:11px}
+.stat span {display:block;color:var(--muted);font-size:12px}
+.stat strong {display:block;font-size:21px;margin-top:9px;overflow-wrap:anywhere}
+.row {display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row > * {flex:1}
+.tablewrap {overflow-x:auto}
+table {width:100%;border-collapse:collapse;min-width:520px}
+th,td {text-align:left;padding:12px 9px;border-bottom:1px solid var(--line)}
+th {font-size:12px;color:var(--muted)}
+td {font-size:12px}
+.pill {padding:5px 7px;border-radius:6px;font-size:11px;background:#26374c}
+.paid {color:var(--cyan)}
+.timer {font-size:30px;font-weight:bold;margin:12px 0;color:var(--cyan)}
+.check {display:flex;align-items:center;gap:8px;margin-top:13px;color:#cfdae8}
+.check input {width:auto}
+footer {text-align:center;color:var(--muted);font-size:11px;padding:20px}
+.hidden {display:none!important}
+@media(min-width:650px) {
+  .wrap {padding:25px}
+  .packages {grid-template-columns:repeat(4,minmax(0,1fr))}
+  .stats {grid-template-columns:repeat(4,minmax(0,1fr))}
+  .columns {display:grid;grid-template-columns:1fr 1fr;gap:15px}
+}
+@media print {
+  body * {visibility:hidden}
+  #printArea, #printArea * {visibility:visible}
+  #printArea {position:absolute;left:0;top:0;width:100%;color:#000;background:#fff}
+}
+#printArea {display:none}
+#printArea.show {display:block}
+.pcard {display:inline-block;width:46%;margin:1.5%;padding:12px;border:1px dashed #000;color:#000;font-family:monospace}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">⌁</div>
+    <div>
+      <h1>HOTSPOTER</h1>
+      <div class="sub">WI-FI VOUCHER MANAGER</div>
+    </div>
+  </div>
+  <span class="status" id="modeBadge">● ...</span>
+</header>
+
+<main class="wrap">
+  <nav class="tabs">
+    <button class="tab active" data-page="customer">📶 Mteja</button>
+    <button class="tab" data-page="admin">▦ Admin</button>
+  </nav>
+
+  <!-- CUSTOMER -->
+  <section id="customer" class="page active">
+    <div class="card">
+      <h2>Karibu HOTSPOTER</h2>
+      <p>Chagua kifurushi, ingiza voucher code uliyopewa na uone muda wako.</p>
+      <div class="packages" id="packages"></div>
+      <label class="label" for="voucherInput">Voucher code</label>
+      <input id="voucherInput" placeholder="Mfano: HOT-AB12CD" autocomplete="off" maxlength="20">
+      <button class="primary" id="redeemBtn">Thibitisha voucher</button>
+      <div id="customerMessage" class="notice">Nunua voucher kutoka kwa msimamizi ili kuanza.</div>
+    </div>
+
+    <div class="card hidden" id="sessionCard">
+      <h3>MUDA WAKO WA MATUMIZI</h3>
+      <div id="sessionCode" class="status"></div>
+      <div id="timer" class="timer">00:00:00</div>
+      <div class="notice" id="sessionState"></div>
+    </div>
+    <div class="notice" id="infoNote"></div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="admin" class="page">
+    <!-- login -->
+    <div class="card" id="adminLogin">
+      <h2>Ingia kama Admin</h2>
+      <p id="loginHint"></p>
+      <div id="emailWrap">
+        <label class="label" for="adminEmail">Email</label>
+        <input id="adminEmail" type="email" autocomplete="username">
+      </div>
+      <label class="label" for="adminPass" id="passLabel">Nenosiri</label>
+      <input id="adminPass" type="password" autocomplete="current-password">
+      <button class="primary" id="loginBtn">Ingia</button>
+      <div id="loginMsg" class="notice err hidden"></div>
+    </div>
+
+    <!-- panel -->
+    <div id="adminPanel" class="hidden">
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <h2 style="flex:3;margin:0">Admin Dashboard</h2>
+          <button class="secondary" id="logoutBtn">Toka</button>
+        </div>
+        <p>Simamia vifurushi, tengeneza voucher na fuatilia mauzo.</p>
+        <div class="stats">
+          <div class="stat"><span>Jumla ya mapato</span><strong id="revenue">TSh 0</strong></div>
+          <div class="stat"><span>Voucher zilizouzwa</span><strong id="sold">0</strong></div>
+          <div class="stat"><span>Voucher zilizotumika</span><strong id="used">0</strong></div>
+          <div class="stat"><span>Hazijatumika</span><strong id="unused">0</strong></div>
+        </div>
+      </div>
+
+      <div class="columns">
+        <div class="card">
+          <h3>Tengeneza voucher mpya</h3>
+          <label class="label" for="adminPackage">Kifurushi</label>
+          <select id="adminPackage"></select>
+          <label class="label" for="qty">Idadi (1–50)</label>
+          <input id="qty" type="number" min="1" max="50" value="1">
+          <label class="check"><input type="checkbox" id="markPaid"> Tayari imelipiwa (weka alama ya malipo moja kwa moja)</label>
+          <button class="primary" id="generateBtn">+ Tengeneza voucher</button>
+          <div id="generatedMessage" class="notice">Voucher mpya zitaonekana hapa.</div>
+        </div>
+
+        <div class="card">
+          <h3>Zana</h3>
+          <p>Thibitisha mauzo baada ya kupokea malipo halisi ya mteja.</p>
+          <div class="row">
+            <button class="secondary" id="exportBtn">Pakua CSV</button>
+            <button class="secondary" id="printBtn">Print voucher</button>
+          </div>
+          <button class="secondary danger" id="clearBtn" style="margin-top:10px;width:100%">Futa voucher ambazo hazijalipiwa</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Orodha ya voucher</h3>
+        <input id="search" placeholder="Tafuta code..." style="margin-bottom:12px">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Code</th><th>Kifurushi</th><th>Bei</th><th>Hali</th><th>Kitendo</th></tr></thead>
+            <tbody id="voucherRows"></tbody>
+          </table>
+        </div>
+        <p id="emptyVouchers">Bado hakuna voucher. Tengeneza ya kwanza hapo juu.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="printArea"></div>
+<footer>HOTSPOTER © 2026 · v2</footer>
+
+<script type="module">
+"use strict";
+
+/* ================================================================
+   FIREBASE CONFIG  —  BADILISHA HAPA TU
+   Weka config yako kutoka Firebase Console > Project settings.
+   Ukiiacha kama ilivyo, app itafanya kazi kwa DEMO MODE (localStorage).
+   ================================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFDHOJiKAiQIkfuEl5ovpn-OTbdSHXEMk",
+  authDomain: "hotspoter-4d3d2.firebaseapp.com",
+  projectId: "hotspoter-4d3d2",
+  storageBucket: "hotspoter-4d3d2.firebasestorage.app",
+  messagingSenderId: "907838958658",
+  appId: "1:907838958658:web:dae1c6155ca1bec18811db"
+};
+const DEMO_ADMIN_PIN = "1234"; // inatumika DEMO MODE tu
+
+/* ================================================================ */
+const plans = [
+  {id:"p30",   name:"Dakika 30", minutes:30,   price:500},
+  {id:"p60",   name:"Saa 1",     minutes:60,   price:1000},
+  {id:"p180",  name:"Saa 3",     minutes:180,  price:2000},
+  {id:"p1440", name:"Saa 24",    minutes:1440, price:3000}
+];
+
+const $ = id => document.getElementById(id);
+const FIREBASE_ON = !firebaseConfig.apiKey.startsWith("PASTE");
+const SESSION_KEY = "hotspoter_session_v2";
+const LOCAL_KEY = "hotspoter_demo_v2";
+
+let selectedPlan = "p60";
+let sessionInterval = null;
+let allVouchers = [];
+let lastGenerated = [];
+
+/* ---------- helpers ---------- */
+const money = n => "TSh " + Number(n).toLocaleString("en-US");
+const getPlan = id => plans.find(p => p.id === id);
+const escapeHTML = v => String(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function makeCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const arr = new Uint32Array(6);
+  crypto.getRandomValues(arr);
+  return "HOT-" + Array.from(arr, n => chars[n % chars.length]).join("");
+}
+
+/* ================================================================
+   STORE — Firebase au localStorage, API ni ile ile
+   ================================================================ */
+let store;
+
+if (FIREBASE_ON) {
+  const [{ initializeApp }, fs, au] = await Promise.all([
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js")
+  ]);
+  const app = initializeApp(firebaseConfig);
+  const db = fs.getFirestore(app);
+  const auth = au.getAuth(app);
+  const col = fs.collection(db, "vouchers");
+
+  store = {
+    mode: "firebase",
+    onAuth(cb) { au.onAuthStateChanged(auth, u => cb(!!u)); },
+    async login(email, pass) { await au.signInWithEmailAndPassword(auth, email, pass); },
+    async logout() { await au.signOut(auth); },
+    subscribe(cb, onErr) {
+      return fs.onSnapshot(col, snap => cb(snap.docs.map(d => d.data())), onErr);
+    },
+    async create(list) {
+      const batch = fs.writeBatch(db);
+      list.forEach(v => batch.set(fs.doc(db, "vouchers", v.code), v));
+      await batch.commit();
+    },
+    async exists(code) { return (await fs.getDoc(fs.doc(db, "vouchers", code))).exists(); },
+    async markPaid(code) {
+      await fs.updateDoc(fs.doc(db, "vouchers", code), { paid:true, paidAt:Date.now() });
+    },
+    async remove(codes) {
+      const batch = fs.writeBatch(db);
+      codes.forEach(c => batch.delete(fs.doc(db, "vouchers", c)));
+      await batch.commit();
+    },
+    async redeem(code) {
+      const ref = fs.doc(db, "vouchers", code);
+      return fs.runTransaction(db, async tx => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) return {error:"notfound"};
+        const v = snap.data();
+        if (!v.paid) return {error:"unpaid"};
+        if (v.used) return {error:"used"};
+        const now = Date.now();
+        const expiresAt = now + v.minutes * 60000;
+        tx.update(ref, { used:true, usedAt:now, expiresAt });
+        return { ok:true, code:v.code, expiresAt };
+      });
+    }
+  };
+} else {
+  // ----- DEMO MODE (localStorage) -----
+  let authed = false;
+  const subs = new Set();
+  const authSubs = new Set();
+  const load = () => {
+    try { const s = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (Array.isArray(s)) return s; } catch(e){}
+    return [];
+  };
+  let list = load();
+  const persist = () => { localStorage.setItem(LOCAL_KEY, JSON.stringify(list)); subs.forEach(cb => cb(list.slice())); };
+
+  store = {
+    mode: "demo",
+    onAuth(cb) { authSubs.add(cb); cb(authed); },
+    async login(_e, pass) {
+      if (pass !== DEMO_ADMIN_PIN) throw new Error("PIN si sahihi");
+      authed = true; authSubs.forEach(cb => cb(true));
+    },
+    async logout() { authed = false; authSubs.forEach(cb => cb(false)); },
+    subscribe(cb) { subs.add(cb); cb(list.slice()); return () => subs.delete(cb); },
+    async create(items) { list.push(...items); persist(); },
+    async exists(code) { return list.some(v => v.code === code); },
+    async markPaid(code) {
+      const v = list.find(x => x.code === code);
+      if (v) { v.paid = true; v.paidAt = Date.now(); persist(); }
+    },
+    async remove(codes) { list = list.filter(v => !codes.includes(v.code)); persist(); },
+    async redeem(code) {
+      const v = list.find(x => x.code === code);
+      if (!v) return {error:"notfound"};
+      if (!v.paid) return {error:"unpaid"};
+      if (v.used) return {error:"used"};
+      v.used = true; v.usedAt = Date.now();
+      v.expiresAt = v.usedAt + v.minutes * 60000;
+      persist();
+      return {ok:true, code:v.code, expiresAt:v.expiresAt};
+    }
+  };
+}
+
+/* ================================================================
+   UI: STATUS
+   ================================================================ */
+$("modeBadge").textContent = FIREBASE_ON ? "● ONLINE" : "● DEMO MODE";
+$("infoNote").innerHTML = FIREBASE_ON
+  ? "<strong>Angalizo:</strong> Muda unaonyeshwa kwenye ukurasa huu. Kufunga au kufungua intaneti halisi kunahitaji router (mfano MikroTik Hotspot) iliyounganishwa na mfumo huu."
+  : "<strong>Angalizo:</strong> DEMO MODE — data ziko kwenye browser hii tu. Weka Firebase config ili data zionekane kwenye vifaa vyote. Haizimi intaneti halisi ya kifaa.";
+$("loginHint").textContent = FIREBASE_ON
+  ? "Tumia email na nenosiri la admin ulilotengeneza kwenye Firebase Authentication."
+  : "DEMO MODE: weka PIN ya admin (chaguo-msingi: 1234, ibadilishe kwenye code).";
+if (!FIREBASE_ON) {
+  $("emailWrap").classList.add("hidden");
+  $("passLabel").textContent = "PIN";
+}
+
+/* ================================================================
+   CUSTOMER
+   ================================================================ */
+function renderPackages() {
+  $("packages").innerHTML = plans.map(p => `
+    <button class="package ${p.id === selectedPlan ? "selected" : ""}" data-plan="${p.id}">
+      <small>${p.name}</small><strong>${money(p.price)}</strong><small>${p.minutes} dakika</small>
+    </button>`).join("");
+  document.querySelectorAll("[data-plan]").forEach(b => b.addEventListener("click", () => {
+    selectedPlan = b.dataset.plan; renderPackages();
+  }));
+  $("adminPackage").innerHTML = plans.map(p => `<option value="${p.id}">${p.name} — ${money(p.price)}</option>`).join("");
+}
+
+function startTimer(code, expiresAt) {
+  if (sessionInterval) clearInterval(sessionInterval);
+  $("sessionCard").classList.remove("hidden");
+  $("sessionCode").textContent = "VOUCHER: " + code;
+  const timer = $("timer"), state = $("sessionState");
+
+  function tick() {
+    const remaining = Math.max(0, expiresAt - Date.now());
+    const t = Math.ceil(remaining / 1000);
+    timer.textContent = [Math.floor(t/3600), Math.floor((t%3600)/60), t%60]
+      .map(n => String(n).padStart(2,"0")).join(":");
+    if (remaining <= 0) {
+      state.textContent = "Muda wako umeisha. Nunua voucher mpya kuendelea.";
+      clearInterval(sessionInterval); sessionInterval = null;
+      try { localStorage.removeItem(SESSION_KEY); } catch(e){}
+    } else {
+      state.textContent = "Muda unaendelea kuhesabiwa.";
+    }
+  }
+  tick();
+  if (expiresAt > Date.now()) sessionInterval = setInterval(tick, 1000);
+}
+
+function restoreSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY));
+    if (s && s.code && s.expiresAt > Date.now()) startTimer(s.code, s.expiresAt);
+    else localStorage.removeItem(SESSION_KEY);
+  } catch(e){}
+}
+
+async function redeemVoucher() {
+  const code = $("voucherInput").value.trim().toUpperCase();
+  const msg = $("customerMessage");
+  msg.classList.remove("err");
+  if (!code) { msg.textContent = "Ingiza voucher code kwanza."; return; }
+
+  $("redeemBtn").disabled = true;
+  try {
+    const r = await store.redeem(code);
+    if (r.ok) {
+      try { localStorage.setItem(SESSION_KEY, JSON.stringify({code:r.code, expiresAt:r.expiresAt})); } catch(e){}
+      msg.textContent = "Voucher imekubaliwa. Muda wako umeanza kuhesabiwa.";
+      $("voucherInput").value = "";
+      startTimer(r.code, r.expiresAt);
+    } else {
+      msg.classList.add("err");
+      msg.textContent = {
+        notfound: "Voucher haijapatikana. Hakikisha code ni sahihi.",
+        unpaid:   "Voucher hii bado haijathibitishwa kuwa imelipiwa.",
+        used:     "Voucher hii tayari imetumika."
+      }[r.error] || "Kuna hitilafu.";
+    }
+  } catch (e) {
+    msg.classList.add("err");
+    msg.textContent = "Imeshindwa kuwasiliana na seva. Angalia mtandao wako kisha jaribu tena.";
+  } finally {
+    $("redeemBtn").disabled = false;
+  }
+}
+
+/* ================================================================
+   ADMIN
+   ================================================================ */
+function stateOf(v) { return v.used ? "Imetumika" : v.paid ? "Imelipiwa" : "Haijalipiwa"; }
+
+function renderAdmin() {
+  const list = allVouchers.slice().sort((a,b) => b.createdAt - a.createdAt);
+  const paid = list.filter(v => v.paid);
+  $("revenue").textContent = money(paid.reduce((s,v) => s + v.price, 0));
+  $("sold").textContent = paid.length;
+  $("used").textContent = list.filter(v => v.used).length;
+  $("unused").textContent = list.filter(v => v.paid && !v.used).length;
+
+  const q = $("search").value.trim().toUpperCase();
+  const shown = q ? list.filter(v => v.code.includes(q)) : list;
+
+  $("voucherRows").innerHTML = shown.map(v => {
+    let action;
+    if (!v.paid) {
+      action = `<button class="secondary" data-pay="${escapeHTML(v.code)}">Thibitisha mauzo</button>
+                <button class="secondary danger" data-del="${escapeHTML(v.code)}">Futa</button>`;
+    } else if (!v.used) action = `<span class="paid">Tayari kuanza</span>`;
+    else action = `<span class="pill">Imetumika</span>`;
+    return `<tr>
+      <td>${escapeHTML(v.code)}</td>
+      <td>${escapeHTML(v.planName || getPlan(v.planId)?.name || "—")}</td>
+      <td>${money(v.price)}</td>
+      <td>${stateOf(v)}</td>
+      <td>${action}</td></tr>`;
+  }).join("");
+
+  $("emptyVouchers").classList.toggle("hidden", shown.length > 0);
+
+  document.querySelectorAll("[data-pay]").forEach(b => b.addEventListener("click", () => confirmSale(b.dataset.pay)));
+  document.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => deleteOne(b.dataset.del)));
+}
+
+let unsubscribe = null;
+function startAdminFeed() {
+  if (unsubscribe) return;
+  unsubscribe = store.subscribe(list => { allVouchers = list; renderAdmin(); }, err => {
+    $("generatedMessage").classList.add("err");
+    $("generatedMessage").textContent = "Imeshindwa kusoma data: " + err.message;
+  });
+}
+function stopAdminFeed() {
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  allVouchers = [];
+}
+
+async function generateVouchers() {
+  const plan = getPlan($("adminPackage").value);
+  const qty = Math.min(50, Math.max(1, parseInt($("qty").value, 10) || 1));
+  if (!plan) return;
+  const paid = $("markPaid").checked;
+  const msg = $("generatedMessage");
+  msg.classList.remove("err");
+  $("generateBtn").disabled = true;
+  try {
+    const used = new Set(allVouchers.map(v => v.code));
+    const items = [];
+    while (items.length < qty) {
+      const code = makeCode();
+      if (used.has(code)) continue;
+      used.add(code);
+      items.push({
+        code, planId:plan.id, planName:plan.name, minutes:plan.minutes, price:plan.price,
+        paid, used:false, createdAt:Date.now(), paidAt: paid ? Date.now() : null,
+        usedAt:null, expiresAt:null
+      });
+    }
+    await store.create(items);
+    lastGenerated = items;
+    msg.innerHTML = `Zimetengenezwa <strong>${items.length}</strong> (${escapeHTML(plan.name)}, ${money(plan.price)}):<br>` +
+      items.slice(0, 10).map(v => `<strong>${escapeHTML(v.code)}</strong>`).join("<br>") +
+      (items.length > 10 ? `<br>...na ${items.length - 10} zaidi (angalia orodha au Print)` : "") +
+      `<br><button class="secondary" id="copyCodes" style="margin-top:10px">Nakili zote</button>`;
+    $("copyCodes").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(items.map(v => v.code).join("\n")); $("copyCodes").textContent = "Imenakiliwa ✓"; }
+      catch(e) { alert(items.map(v => v.code).join("\n")); }
+    });
+  } catch (e) {
+    msg.classList.add("err");
+    msg.textContent = "Imeshindwa kutengeneza: " + e.message;
+  } finally {
+    $("generateBtn").disabled = false;
+  }
+}
+
+async function confirmSale(code) {
+  const v = allVouchers.find(x => x.code === code);
+  if (!v || v.paid) return;
+  if (!confirm(`Umeshapokea ${money(v.price)} kwa voucher ${code}?`)) return;
+  try { await store.markPaid(code); } catch(e) { alert("Imeshindwa: " + e.message); }
+}
+
+async function deleteOne(code) {
+  if (!confirm(`Futa voucher ${code}?`)) return;
+  try { await store.remove([code]); } catch(e) { alert("Imeshindwa: " + e.message); }
+}
+
+async function clearUnpaid() {
+  const codes = allVouchers.filter(v => !v.paid).map(v => v.code);
+  if (!codes.length) { alert("Hakuna voucher ambazo hazijalipiwa."); return; }
+  if (!confirm(`Futa voucher ${codes.length} ambazo hazijalipiwa?`)) return;
+  try {
+    for (let i = 0; i < codes.length; i += 400) await store.remove(codes.slice(i, i + 400));
+  } catch(e) { alert("Imeshindwa: " + e.message); }
+}
+
+function exportCSV() {
+  const rows = [["Code","Kifurushi","Bei","Imelipiwa","Imetumika","Tarehe"]];
+  allVouchers.forEach(v => rows.push([
+    v.code, v.planName || "", v.price, v.paid ? "Ndiyo":"Hapana", v.used ? "Ndiyo":"Hapana",
+    new Date(v.createdAt).toLocaleString()
+  ]));
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8"}));
+  const a = document.createElement("a");
+  a.href = url; a.download = "hotspoter-ripoti.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function printVouchers() {
+  const items = lastGenerated.length ? lastGenerated : allVouchers.filter(v => v.paid && !v.used);
+  if (!items.length) { alert("Hakuna voucher za kuprint. Tengeneza kwanza."); return; }
+  const area = $("printArea");
+  area.innerHTML = items.map(v => `<div class="pcard"><strong>HOTSPOTER</strong><br>
+    Code: <strong>${escapeHTML(v.code)}</strong><br>${escapeHTML(v.planName)} · ${money(v.price)}</div>`).join("");
+  area.classList.add("show");
+  window.print();
+  area.classList.remove("show");
+}
+
+/* ---------- admin auth ---------- */
+function setAdminView(isAuthed) {
+  $("adminLogin").classList.toggle("hidden", isAuthed);
+  $("adminPanel").classList.toggle("hidden", !isAuthed);
+  if (isAuthed) startAdminFeed(); else stopAdminFeed();
+}
+
+async function doLogin() {
+  const m = $("loginMsg");
+  m.classList.add("hidden");
+  $("loginBtn").disabled = true;
+  try {
+    await store.login($("adminEmail").value.trim(), $("adminPass").value);
+    $("adminPass").value = "";
+  } catch (e) {
+    m.textContent = FIREBASE_ON ? "Email au nenosiri si sahihi." : "PIN si sahihi.";
+    m.classList.remove("hidden");
+  } finally {
+    $("loginBtn").disabled = false;
+  }
+}
+
+/* ================================================================
+   WIRING
+   ================================================================ */
+document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === btn));
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === btn.dataset.page));
+}));
+
+$("redeemBtn").addEventListener("click", redeemVoucher);
+$("voucherInput").addEventListener("keydown", e => { if (e.key === "Enter") redeemVoucher(); });
+$("generateBtn").addEventListener("click", generateVouchers);
+$("exportBtn").addEventListener("click", exportCSV);
+$("printBtn").addEventListener("click", printVouchers);
+$("clearBtn").addEventListener("click", clearUnpaid);
+$("search").addEventListener("input", renderAdmin);
+$("loginBtn").addEventListener("click", doLogin);
+$("adminPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+$("logoutBtn").addEventListener("click", () => store.logout());
+
+store.onAuth(setAdminView);
+renderPackages();
+restoreSession();
+</script>
+</body>
+</html>
